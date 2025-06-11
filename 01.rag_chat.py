@@ -47,13 +47,13 @@ def get_openai_response(messages):
         ],
     }
 
-    response = client.chat.completions.create(
+    openai_response = client.chat.completions.create(
         model=chat_model,
         messages=messages,
         extra_body=rag_params
     )
 
-    return response.choices[0].message.content
+    return openai_response.choices[0].message.content
 
 
 st.title("Margie's Travel Assistant")
