@@ -1,17 +1,17 @@
+import logging
 import os
+import statistics
+from datetime import datetime, timedelta
 
-from dotenv import load_dotenv
+import requests
+import streamlit as st
+from authlib.integrations.requests_client import OAuth2Session
 from azure.ai.agents import AgentsClient
 from azure.identity import DefaultAzureCredential
-import streamlit as st
-import logging
-from authlib.integrations.requests_client import OAuth2Session
-from googleapiclient.discovery import build
+from dotenv import load_dotenv
 from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from datetime import datetime, timedelta
-import requests
-import statistics
 
 # Load from environment variables
 load_dotenv()
