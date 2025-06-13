@@ -301,7 +301,7 @@ with st.sidebar:
         st.button("로그아웃", on_click=lambda: st.logout(), type="primary")
 
 if "google_token" not in st.session_state:
-    st.write("서비스를 이용하기 위해선 구글 계정으로 로그인이 필요합니다.")
+    st.info("서비스를 이용하기 위해선 **Google 계정**으로 **로그인**이 필요합니다.")
 else:
     st.success("구글 계정 로그인 완료 ✅")
     events = get_calendar_events()
