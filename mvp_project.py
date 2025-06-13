@@ -202,15 +202,19 @@ def get_today_temperature_summary(data):
     }
 
 
-def retrieve_morning_briefing(prompt: str) -> str | None:
+def retrieve_morning_briefing(user_events: str) -> str | None:
     # Add weather forecast data at prompt, fetched from Open-Meteo API
     with st.spinner("Fetching weather forecast..."):
         current_weather_forecast = get_today_temperature_summary(get_weather_forecast(37.5665, 126.9780))
 
-    prompt += f"""
+    prompt = f"""
     제가 살고있는 곳의 날씨 정보는 다음과 같습니다:
     {current_weather_forecast}
     
+    오늘의 일정은 다음과 같습니다:
+    {user_events}
+    
+    이 정보들을 참고하여, 자연스럽고 친근한 톤의 모닝 브리핑을 작성해 주세요.
     """
 
     # Instantiate client
@@ -264,18 +268,11 @@ else:
     if not formatted_events.strip():
         formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
 
-    prompt = f"""
-    오늘의 일정은 다음과 같습니다:
-    {formatted_events}
-    
-    이 정보들을 참고하여, 자연스럽고 친근한 톤의 모닝 브리핑을 작성해 주세요.
-    """
-
     if st.button("AI Morning Briefing"):
         output_container = st.container()
         with output_container:
             with st.status("Wait a moment...", expanded=True) as status:
-                briefing = retrieve_morning_briefing(prompt)
+                briefing = retrieve_morning_briefing(formatted_events)
                 if briefing:
                     status.update(label="Completed!", state="complete")
                     st.markdown(briefing)
