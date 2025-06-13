@@ -10,7 +10,6 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.errors import HttpError
 from datetime import datetime, timedelta
-from markdownlit import mdlit
 import requests
 import statistics
 
@@ -203,7 +202,17 @@ def get_today_temperature_summary(data):
     }
 
 
-def retrieve_morning_briefing(prompt: str) -> str:
+def retrieve_morning_briefing(prompt: str) -> str | None:
+    # Add weather forecast data at prompt, fetched from Open-Meteo API
+    with st.spinner("Fetching weather forecast..."):
+        current_weather_forecast = get_today_temperature_summary(get_weather_forecast(37.5665, 126.9780))
+
+    prompt += f"""
+    제가 살고있는 곳의 날씨 정보는 다음과 같습니다:
+    {current_weather_forecast}
+    
+    """
+
     # Instantiate client
     client = AgentsClient(endpoint=endpoint, credential=DefaultAzureCredential())
 
@@ -218,18 +227,18 @@ def retrieve_morning_briefing(prompt: str) -> str:
     )
 
     # Step 3: Invoke the agent with a run
-    with st.spinner("Generating your morning briefing...", show_time=True):
+    with st.spinner("Generating...", show_time=True):
         run = client.runs.create_and_process(thread_id=thread.id, agent_id=agent_id)
 
     if run.status == "completed":
         messages = client.messages.list(thread_id=thread.id)
         for msg in messages:
             if msg.role == "assistant":
-                markdown_result = msg.content[0]['text']['value']
-                st.markdown(mdlit(markdown_result))
+                return msg.content[0]['text']['value']
     else:
         st.error("Error occurred while generating morning briefing.")
         print(f"{run.last_error}")
+        return None
 
 
 # --- Streamlit Setup ---
@@ -255,15 +264,7 @@ else:
     if not formatted_events.strip():
         formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
 
-    current_address = "서울특별시 서초구 효령로33길 35"
-
-    with st.spinner("Fetching weather forecast..."):
-        current_weather_forecast = get_today_temperature_summary(get_weather_forecast(37.5665, 126.9780))
-
     prompt = f"""
-    제가 살고있는 곳의 날씨 정보는 다음과 같습니다:
-    {current_weather_forecast}
-    
     오늘의 일정은 다음과 같습니다:
     {formatted_events}
     
@@ -273,4 +274,10 @@ else:
     if st.button("AI Morning Briefing"):
         output_container = st.container()
         with output_container:
-            retrieve_morning_briefing(prompt)
+            with st.status("Generating morning briefing...", expanded=True) as status:
+                briefing = retrieve_morning_briefing(prompt)
+                if briefing:
+                    status.update(label="Completed!", state="complete")
+                    st.markdown(briefing)
+                else:
+                    status.update(label="Failed to generate briefing.", state="error")
