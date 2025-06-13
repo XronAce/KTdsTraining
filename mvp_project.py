@@ -99,16 +99,16 @@ def get_calendar_events(max_results: int = 10) -> list[dict] | None:
             orderBy="startTime"
         ).execute()
 
-        events = events_result.get("items", [])
-        if not events:
+        retrieved_events = events_result.get("items", [])
+        if not retrieved_events:
             st.info("There are no upcoming events today.")
-            return
+            return None
 
-        for event in events:
+        for event in retrieved_events:
             start = event["start"].get("dateTime", event["start"].get("date"))
             summary = event.get("summary", "No Title")
             st.markdown(f"📅 **{start}** — {summary}")
-        return events
+        return retrieved_events
 
     except HttpError as error:
         st.error(f"Calendar API error: {error}")
@@ -121,9 +121,9 @@ def get_calendar_events(max_results: int = 10) -> list[dict] | None:
 def format_events(events: list[dict]) -> str:
     formatted = []
     if events:
-        for event in events:
-            start = event["start"].get("dateTime", event["start"].get("date"))
-            summary = event.get("summary", "No Title")
+        for e in events:
+            start = e["start"].get("dateTime", e["start"].get("date"))
+            summary = e.get("summary", "No Title")
             formatted.append(f"- {start} : {summary}")
     return "\n".join(formatted)
 
