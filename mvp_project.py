@@ -66,6 +66,19 @@ def exchange_token():
         st.error(f"Token exchange failed: {e}")
 
 
+def format_time_korean(dt_str: str) -> str:
+    if "T" not in dt_str:
+        return "종일"
+    time_part = dt_str.split("T")[1][:5]  # Get "HH:MM"
+    hour = int(time_part[:2])
+    minute = time_part[3:]
+
+    am_pm = "오전" if hour < 12 else "오후"
+    hour_12 = hour if 1 <= hour <= 12 else (hour - 12 if hour > 12 else 12)
+
+    return f"{am_pm} {hour_12}:{minute}"
+
+
 def get_calendar_events(max_results: int = 10) -> list[dict] | None:
     try:
         token = st.session_state.get("google_token")
@@ -104,12 +117,24 @@ def get_calendar_events(max_results: int = 10) -> list[dict] | None:
             st.info("There are no upcoming events today.")
             return None
 
-        for event in retrieved_events:
-            start = event["start"].get("dateTime", event["start"].get("date"))
-            summary = event.get("summary", "No Title")
-            st.markdown(f"📅 **{start}** — {summary}")
-        return retrieved_events
+        event_lines = []
+        for idx, e in enumerate(retrieved_events, start=1):
+            start = e["start"].get("dateTime", e["start"].get("date"))
+            end = e["end"].get("dateTime", e["end"].get("date"))
+            summary = e.get("summary", "No Title")
+            start_formatted = format_time_korean(start)
+            end_formatted = format_time_korean(end)
 
+            if start_formatted == "종일" or end_formatted == "종일":
+                time_range = "종일"
+            else:
+                time_range = f"{start_formatted} ~ {end_formatted}"
+
+            event_lines.append(f"{idx}. {time_range}: {summary}")
+
+        all_events_md = "📅 **일정**\n\n" + "\n\n".join(event_lines)
+        st.info(all_events_md)
+        return retrieved_events
     except HttpError as error:
         st.error(f"Calendar API error: {error}")
         return None
@@ -118,10 +143,10 @@ def get_calendar_events(max_results: int = 10) -> list[dict] | None:
         return None
 
 
-def format_events(events: list[dict]) -> str:
+def format_events(calendar_events: list[dict]) -> str:
     formatted = []
-    if events:
-        for e in events:
+    if calendar_events:
+        for e in calendar_events:
             start = e["start"].get("dateTime", e["start"].get("date"))
             summary = e.get("summary", "No Title")
             formatted.append(f"- {start} : {summary}")
@@ -248,33 +273,37 @@ def retrieve_morning_briefing(user_events: str) -> str | None:
 # --- Streamlit Setup ---
 st.set_page_config(page_title="AI Morning Briefing", layout="wide")
 st.title("☀️ AI 모닝 브리핑")
-st.write("서비스를 이용하기 위해선 구글 계정으로 로그인이 필요합니다.")
+
+with st.sidebar:
+    if "google_token" not in st.session_state:
+        if st.query_params.get("code"):
+            exchange_token()
+        else:
+            auth_url = get_authorization_url()
+            # st.markdown(f'<a href="{auth_url}" target="_self"><button>Login with Google</button></a>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <a href="{auth_url}" target="_self" style="
+                display: inline-block;
+                padding: 0.5rem 1rem;
+                background-color: #4285F4;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+                font-family: 'Segoe UI', sans-serif;
+            ">
+                Google 로그인
+            </a>
+            """, unsafe_allow_html=True)
+    else:
+        st.button("로그아웃", on_click=lambda: st.logout(), type="primary")
 
 if "google_token" not in st.session_state:
-    if st.query_params.get("code"):
-        exchange_token()
-    else:
-        auth_url = get_authorization_url()
-        # st.markdown(f'<a href="{auth_url}" target="_self"><button>Login with Google</button></a>', unsafe_allow_html=True)
-        st.markdown(f"""
-        <a href="{auth_url}" target="_self" style="
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            font-family: 'Segoe UI', sans-serif;
-        ">
-            Google 로그인
-        </a>
-        """, unsafe_allow_html=True)
+    st.write("서비스를 이용하기 위해선 구글 계정으로 로그인이 필요합니다.")
 else:
     st.success("구글 계정 로그인 완료 ✅")
-    st.button("로그아웃", on_click=lambda: st.logout(), type="primary")
     events = get_calendar_events()
 
     if events:
@@ -285,7 +314,7 @@ else:
     if not formatted_events.strip():
         formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
 
-    if st.button("AI Morning Briefing"):
+    if st.button("모닝 브리핑 생성", type="secondary"):
         output_container = st.container()
         with output_container:
             with st.status("Wait a moment...", expanded=True) as status:
