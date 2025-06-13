@@ -227,7 +227,7 @@ def retrieve_morning_briefing(prompt: str) -> str | None:
     )
 
     # Step 3: Invoke the agent with a run
-    with st.spinner("Generating...", show_time=True):
+    with st.spinner("Generating morning briefing...", show_time=True):
         run = client.runs.create_and_process(thread_id=thread.id, agent_id=agent_id)
 
     if run.status == "completed":
@@ -274,7 +274,7 @@ else:
     if st.button("AI Morning Briefing"):
         output_container = st.container()
         with output_container:
-            with st.status("Generating morning briefing...", expanded=True) as status:
+            with st.status("Wait a moment...", expanded=True) as status:
                 briefing = retrieve_morning_briefing(prompt)
                 if briefing:
                     status.update(label="Completed!", state="complete")
