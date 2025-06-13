@@ -66,6 +66,23 @@ def exchange_token():
         st.error(f"Token exchange failed: {e}")
 
 
+def get_coordinates_from_kakao(address: str):
+    headers = {
+        "Authorization": f"KakaoAK {os.getenv('KAKAO_API_KEY')}",
+    }
+    params = {
+        "query": address
+    }
+    response = requests.get("https://dapi.kakao.com/v2/local/search/address.json", headers=headers, params=params)
+    result = response.json()
+
+    if result.get("documents"):
+        first = result["documents"][0]
+        return float(first["y"]), float(first["x"])  # latitude, longitude
+    else:
+        return None, None
+
+
 def format_time_korean(dt_str: str) -> str:
     if "T" not in dt_str:
         return "종일"
@@ -227,10 +244,10 @@ def get_today_temperature_summary(data):
     }
 
 
-def retrieve_morning_briefing(user_events: str) -> str | None:
+def retrieve_morning_briefing(user_events: str, latitude: float, longitude: float) -> str | None:
     # Add weather forecast data at prompt, fetched from Open-Meteo API
     with st.spinner("Fetching weather forecast..."):
-        current_weather_forecast = get_today_temperature_summary(get_weather_forecast(37.5665, 126.9780))
+        current_weather_forecast = get_today_temperature_summary(get_weather_forecast(latitude, longitude))
 
     prompt = f"""
     제가 살고있는 곳의 날씨 정보는 다음과 같습니다:
@@ -304,23 +321,25 @@ if "google_token" not in st.session_state:
     st.info("서비스를 이용하기 위해선 **Google 계정**으로 **로그인**이 필요합니다.")
 else:
     st.success("구글 계정 로그인 완료 ✅")
-    events = get_calendar_events()
 
-    if events:
-        for event in events:
-            logging.info(f"Event: {event}")
+    address_input = st.text_input("🏡 거주지 주소를 입력하세요 (예: 서울시 서초구 효령로 176)", placeholder="주소 입력")
 
-    formatted_events = format_events(events)
-    if not formatted_events.strip():
-        formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
+    if address_input:
+        lat, lon = get_coordinates_from_kakao(address_input)
+        if lat and lon:
+            st.success(f"위치: 위도 {lat}, 경도 {lon}")
+            events = get_calendar_events()
+            formatted_events = format_events(events) or "오늘은 예정되어 있는 일정이 없습니다."
 
-    if st.button("모닝 브리핑 생성", type="secondary"):
-        output_container = st.container()
-        with output_container:
-            with st.status("Wait a moment...", expanded=True) as status:
-                briefing = retrieve_morning_briefing(formatted_events)
-                if briefing:
-                    status.update(label="Completed!", state="complete")
-                    st.markdown(briefing)
-                else:
-                    status.update(label="Failed to generate briefing.", state="error")
+            if st.button("모닝 브리핑 생성", type="secondary"):
+                output_container = st.container()
+                with output_container:
+                    with st.status("Wait a moment...", expanded=True) as status:
+                        briefing = retrieve_morning_briefing(formatted_events, lat, lon)
+                        if briefing:
+                            status.update(label="Completed!", state="complete")
+                            st.markdown(briefing)
+                        else:
+                            status.update(label="Failed to generate briefing.", state="error")
+        else:
+            st.error("주소를 찾을 수 없습니다. 다시 입력해 주세요.")
