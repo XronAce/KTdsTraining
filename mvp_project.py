@@ -23,9 +23,9 @@ agent_id = os.getenv("AGENT_ID")
 logging.basicConfig(level=logging.WARN, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- OAuth2 Configuration ---
-GOOGLE_CLIENT_ID = st.secrets.auth.client_id
-GOOGLE_CLIENT_SECRET = st.secrets.auth.client_secret
-GOOGLE_REDIRECT_URI = st.secrets.auth.redirect_uri
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo"
