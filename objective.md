@@ -5,9 +5,8 @@
 ### 구현 Step
 1. 인프라 준비
    - 리소스 그룹 생성
-   - Azure OpenAI 생성
-   - Azure Logic Apps 생성(MSN 날씨 Tool 생성 목적)
-   - gpt-4o-mini 모델 배포(in Azure OpenAI)
+   - azure ai foundry의 파운드리 리소스 생성(gpt-4o-mini 모델 배포)
+   - ai foundry 리소스 내 ai agent 생성 및 instruction 작성
 2. 각종 키를 .env 환경변수 등록
 3. Streamlit app 개발 착수
    - 채팅 인터페이스
@@ -26,7 +25,7 @@
 #### 데이터 소스/지식베이스 (RAG 사용 시) - 미사용
 
 ### 기술 스택
-- Azure OpenAI Service(gpt-40-mini)
+- Azure OpenAI Service(gpt-4o-mini)
 - Azure Logic Apps
 - Azure Web App
 - Streamlit
@@ -45,6 +44,3 @@
 3. 슬라이드 3: 핵심 기술 포인트
 4. 슬라이드 4: 라이브 데모 화면 전환
 5. 슬라이드 5: 향후 개선 및 확장 계획
-
-### 완성 후 제출
-youngwook@outlook.com
