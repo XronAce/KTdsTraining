@@ -19,5 +19,6 @@ dependencies = [
     "openai>=1.86.0",
     "streamlit>=1.45.1",
     "streamlit-authenticator>=0.4.2",
+    "streamlit-js-eval>=0.1.7",
     "streamlit-oauth>=0.1.14",
 ]

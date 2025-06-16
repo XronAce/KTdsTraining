@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from streamlit_js_eval import get_geolocation
 
 # Load from environment variables
 load_dotenv()
@@ -83,6 +84,30 @@ def get_coordinates_from_kakao(address: str):
         return None, None
 
 
+def get_korean_road_address(latitude: float, longitude: float) -> str | None:
+    headers = {
+        "Authorization": f"KakaoAK {os.getenv('KAKAO_API_KEY')}"
+    }
+    params = {
+        "x": str(longitude),
+        "y": str(latitude),
+        "input_coord": "WGS84"
+    }
+    response = requests.get("https://dapi.kakao.com/v2/local/geo/coord2address.json", headers=headers, params=params)
+    data = response.json()
+
+    if "documents" in data and len(data["documents"]) > 0:
+        doc = data["documents"][0]
+        road_address = doc.get("road_address")
+        if road_address:
+            return road_address.get("address_name")  # This is the 도로명 주소
+        # Fallback to jibun address if no road address is found
+        address = doc.get("address")
+        if address:
+            return address.get("address_name")
+    return None
+
+
 def format_time_korean(dt_str: str) -> str:
     if "T" not in dt_str:
         return "종일"
@@ -131,7 +156,7 @@ def get_calendar_events(max_results: int = 10) -> list[dict] | None:
 
         retrieved_events = events_result.get("items", [])
         if not retrieved_events:
-            st.info("There are no upcoming events today.")
+            st.info("오늘은 예정되어 있는 일정이 없습니다.")
             return None
 
         event_lines = []
@@ -321,25 +346,30 @@ if "google_token" not in st.session_state:
     st.info("서비스를 이용하기 위해선 **Google 계정**으로 **로그인**이 필요합니다.")
 else:
     st.success("구글 계정 로그인 완료 ✅")
+    location = get_geolocation()
+    lat, lon = None, None
+    if location:
+        lat, lon = location['coords']['latitude'], location['coords']['longitude']
+        print(f"Retrieved coordinate via get_geolocation(): {lat}, {lon}")
+    else:
+        address_input = st.text_input("🏡 현재 주소를 입력하세요 (예: 서울시 서초구 효령로 176)", placeholder="주소 입력")
 
-    address_input = st.text_input("🏡 거주지 주소를 입력하세요 (예: 서울시 서초구 효령로 176)", placeholder="주소 입력")
+        if address_input:
+            lat, lon = get_coordinates_from_kakao(address_input)
+            print(f"Retrieved coordinate via get_coordinates_from_kakao(): {lat}, {lon}")
 
-    if address_input:
-        lat, lon = get_coordinates_from_kakao(address_input)
-        if lat and lon:
-            st.success(f"위치: 위도 {lat}, 경도 {lon}")
-            events = get_calendar_events()
-            formatted_events = format_events(events) or "오늘은 예정되어 있는 일정이 없습니다."
+    if lat and lon:
+        st.success(f"🏡 현재 위치: {get_korean_road_address(lat, lon)}")
+        events = get_calendar_events()
+        formatted_events = format_events(events) or "오늘은 예정되어 있는 일정이 없습니다."
 
-            if st.button("모닝 브리핑 생성", type="secondary"):
-                output_container = st.container()
-                with output_container:
-                    with st.status("Wait a moment...", expanded=True) as status:
-                        briefing = retrieve_morning_briefing(formatted_events, lat, lon)
-                        if briefing:
-                            status.update(label="Completed!", state="complete")
-                            st.markdown(briefing)
-                        else:
-                            status.update(label="Failed to generate briefing.", state="error")
-        else:
-            st.error("주소를 찾을 수 없습니다. 다시 입력해 주세요.")
+        if st.button("모닝 브리핑 생성", type="secondary"):
+            output_container = st.container()
+            with output_container:
+                with st.status("Wait a moment...", expanded=True) as status:
+                    briefing = retrieve_morning_briefing(formatted_events, lat, lon)
+                    if briefing:
+                        status.update(label="Completed!", state="complete")
+                        st.markdown(briefing)
+                    else:
+                        status.update(label="Failed to generate briefing.", state="error")
