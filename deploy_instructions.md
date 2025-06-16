@@ -15,4 +15,6 @@
     - app.py
     - streamlit.sh
 11. Azure Web Apps에서 시작 명령(Startup Command)으로 `bash /home/site/wwwroot/streamlit.sh` 기입하여 streamlit.sh가 구동되도록 지정
-12. 사이트 진입 후 접속 및 기능 테스트 수행
+12. DefaultAzureCredential을 사용하도록 해 두었기 때문에, `az webapp ssh --name <web-app-name> --resource-group <resource-group>`으로 웹서버 접속하여 az login 수행
+    - 보안적으로 적합하지 않으므로 가능하다면 Azure portal의 app restrictions 내에 클라이언트 생성 후, AzureClientCredential로 대체 선호(권한 부족으로 위와 같이 수행)
+13. 사이트 진입 후 접속 및 기능 테스트 수행
