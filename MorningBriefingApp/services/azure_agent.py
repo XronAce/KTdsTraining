@@ -32,7 +32,7 @@ def retrieve_morning_briefing(user_events: str, latitude: float, longitude: floa
     thread = client.threads.create()
 
     # Step 2: Send a user message
-    user_msg = client.messages.create(
+    client.messages.create(
         thread_id=thread.id,
         role="user",
         content=prompt

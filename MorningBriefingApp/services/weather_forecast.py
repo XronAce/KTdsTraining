@@ -64,7 +64,6 @@ def get_today_temperature_summary(data):
     weather_desc = weather_code_description.get(most_common_code, "날씨 정보 없음")
 
     avg_precip = round(statistics.mean(today_precs), 1)
-    precip_msg = ""
     if avg_precip > 0:
         precip_msg = f"오늘 강수량 평균은 {avg_precip}mm로, 비가 올 수 있으니 우산을 챙기세요. ☔"
     else:
