@@ -271,7 +271,7 @@ def get_today_temperature_summary(data):
 
 def retrieve_morning_briefing(user_events: str, latitude: float, longitude: float) -> str | None:
     # Add weather forecast data at prompt, fetched from Open-Meteo API
-    with st.spinner("Fetching weather forecast..."):
+    with st.spinner("현재 날씨 정보 조회중..."):
         current_weather_forecast = get_today_temperature_summary(get_weather_forecast(latitude, longitude))
 
     prompt = f"""
@@ -298,7 +298,7 @@ def retrieve_morning_briefing(user_events: str, latitude: float, longitude: floa
     )
 
     # Step 3: Invoke the agent with a run
-    with st.spinner("Generating morning briefing...", show_time=True):
+    with st.spinner("모닝 브리핑 생성중...", show_time=True):
         run = client.runs.create_and_process(thread_id=thread.id, agent_id=agent_id)
 
     if run.status == "completed":
@@ -361,7 +361,10 @@ else:
                 lat, lon = get_coordinates_from_kakao(address_input)
 
         if lat and lon:
+            status.update(label="완료", state="complete")
             st.success(f"🏡 현재 위치: {get_korean_road_address(lat, lon)} (좌표: {lat:.3f}, {lon:.3f})")
+        else:
+            status.update(label="위치 정보 습득 실패", state="complete")
 
     if lat and lon:
         events = get_calendar_events()
@@ -370,10 +373,11 @@ else:
         if st.button("모닝 브리핑 생성", type="secondary"):
             output_container = st.container()
             with output_container:
-                with st.status("Wait a moment...", expanded=True) as status:
+                with st.status("잠시 기다리세요...", expanded=True) as status:
                     briefing = retrieve_morning_briefing(formatted_events, lat, lon)
                     if briefing:
-                        status.update(label="Completed!", state="complete")
+                        status.update(label="브리핑 생성 완료!", state="complete")
                         st.markdown(briefing)
                     else:
-                        status.update(label="Failed to generate briefing.", state="error")
+                        status.update(label="브리핑 생성 실패...", state="error")
+                        st.error(f"브리핑 생성에 실패하였습니다.")
