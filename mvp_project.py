@@ -314,15 +314,18 @@ def retrieve_morning_briefing(user_events: str, latitude: float, longitude: floa
 
 # --- Streamlit Setup ---
 st.set_page_config(page_title="AI Morning Briefing", layout="wide")
-st.title("☀️ AI 모닝 브리핑")
 
-with st.sidebar:
+col_left, col_right = st.columns([9, 1])
+
+with col_left:
+    st.title("☀️ AI 모닝 브리핑")
+
+with col_right:
     if "google_token" not in st.session_state:
         if st.query_params.get("code"):
             exchange_token()
         else:
             auth_url = get_authorization_url()
-            # st.markdown(f'<a href="{auth_url}" target="_self"><button>Login with Google</button></a>', unsafe_allow_html=True)
             st.markdown(f"""
             <a href="{auth_url}" target="_self" style="
                 display: inline-block;
@@ -346,20 +349,21 @@ if "google_token" not in st.session_state:
     st.info("서비스를 이용하기 위해선 **Google 계정**으로 **로그인**이 필요합니다.")
 else:
     st.success("구글 계정 로그인 완료 ✅")
-    location = get_geolocation()
-    lat, lon = None, None
-    if location:
-        lat, lon = location['coords']['latitude'], location['coords']['longitude']
-        print(f"Retrieved coordinate via get_geolocation(): {lat}, {lon}")
-    else:
-        address_input = st.text_input("🏡 현재 주소를 입력하세요 (예: 서울시 서초구 효령로 176)", placeholder="주소 입력")
+    with st.status("사용자 위치 정보 확인", expanded=True) as status:
+        location = get_geolocation()
+        lat, lon = None, None
+        if location:
+            lat, lon = location['coords']['latitude'], location['coords']['longitude']
+        else:
+            address_input = st.text_input("🏡 현재 주소를 입력하세요 (예: 서울시 서초구 효령로 176)", placeholder="주소 입력")
 
-        if address_input:
-            lat, lon = get_coordinates_from_kakao(address_input)
-            print(f"Retrieved coordinate via get_coordinates_from_kakao(): {lat}, {lon}")
+            if address_input:
+                lat, lon = get_coordinates_from_kakao(address_input)
+
+        if lat and lon:
+            st.success(f"🏡 현재 위치: {get_korean_road_address(lat, lon)} (좌표: {lat:.3f}, {lon:.3f})")
 
     if lat and lon:
-        st.success(f"🏡 현재 위치: {get_korean_road_address(lat, lon)}")
         events = get_calendar_events()
         formatted_events = format_events(events) or "오늘은 예정되어 있는 일정이 없습니다."
 
