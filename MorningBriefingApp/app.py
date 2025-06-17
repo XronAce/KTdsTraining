@@ -61,7 +61,11 @@ else:
     if lat and lon:
         all_events = []
 
-        use_ktds = st.sidebar.checkbox("KTds 캘린더 연동하기", value=False)
+        use_ktds = st.sidebar.radio(
+            "캘린더 연동 선택",
+            ("연동 안함", "KTds 캘린더 연동하기"),
+            index=0
+        ) == "KTds 캘린더 연동하기"
 
         # Reset calendar fetch state when checkbox toggles
         if "calendar_fetched" not in st.session_state or st.session_state.get("ktds_enabled") != use_ktds:
