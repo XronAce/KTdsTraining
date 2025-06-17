@@ -1,3 +1,4 @@
+import logging
 import os
 import zoneinfo
 from datetime import datetime, timedelta
@@ -20,6 +21,8 @@ SCOPES = [
     "openid", "email", "profile",
     "https://www.googleapis.com/auth/calendar.readonly"
 ]
+
+logging.basicConfig(level=logging.WARN, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def get_calendar_events(max_results: int = 10) -> list | None:
@@ -75,8 +78,9 @@ def get_calendar_events(max_results: int = 10) -> list | None:
             event_lines.append(f"{time_range}: [Google] {summary}")
         return event_lines
     except HttpError as error:
-        st.error(f"Calendar API error: {error}")
+        st.error(f"구글 캘린더에 접근 권한이 부족합니다. 재로그인 시 권한을 부여해 주세요.")
+        logging.error(f"Http error occurred: {error}")
         return None
     except Exception as e:
-        st.error(f"Unexpected error: {e}")
+        logging.error(f"Unexpected error occurred while retrieving google calendar events: {e}")
         return None
