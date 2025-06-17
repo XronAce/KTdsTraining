@@ -61,16 +61,17 @@ else:
     if lat and lon:
         all_events = []
 
-        use_ktds = st.checkbox("KTds 캘린더 연동하기", value=False)
+        use_ktds = st.sidebar.checkbox("KTds 캘린더 연동하기", value=False)
 
+        # Reset calendar fetch state when checkbox toggles
         if "calendar_fetched" not in st.session_state or st.session_state.get("ktds_enabled") != use_ktds:
             st.session_state["calendar_fetched"] = False
             st.session_state["ktds_enabled"] = use_ktds
             st.session_state["calendar_data"] = []
 
-        if not st.session_state["calendar_fetched"]:
-            if use_ktds:
-                with st.form("ktds_login_form"):
+        if use_ktds:
+            if not st.session_state["calendar_fetched"]:
+                with st.sidebar.form("ktds_login_form"):
                     ktds_username = st.text_input("KTds 이메일 주소 (예: hong_gil.dong@kt.com)")
                     ktds_password = st.text_input("비밀번호", type="password")
                     submitted = st.form_submit_button("캘린더 불러오기")
@@ -81,22 +82,31 @@ else:
                     with st.spinner("KTds 캘린더 정보 가져오는중...", show_time=False):
                         try:
                             ktds_events = ktds_calendar.get_calendar_events(ktds_username, ktds_password)
-                        except Exception as e:
+                        except Exception:
                             st.error("사내 메일 주소 또는 비밀번호가 잘못되었습니다. 다시 시도해 주세요.")
                             st.stop()
                     all_events = sorted((google_events or []) + (ktds_events or []))
                     st.session_state["calendar_fetched"] = True
                     st.session_state["calendar_data"] = all_events
+                    st.rerun()
                 else:
-                    st.info("KTds 메일 계정 로그인을 완료해 주세요.")
+                    st.sidebar.info("KTds 메일 계정 로그인을 완료해 주세요.")
+                    all_events = []
             else:
+                all_events = st.session_state.get("calendar_data", [])
+                st.sidebar.success("KTds 캘린더 연동이 완료되었습니다.")
+                if st.sidebar.button("캘린더 다시 불러오기"):
+                    st.session_state["calendar_fetched"] = False
+                    st.rerun()
+        else:
+            if not st.session_state["calendar_fetched"]:
                 with st.spinner("구글 캘린더 정보 가져오는중...", show_time=True):
                     google_events = google_calendar.get_calendar_events()
                 all_events = sorted((google_events or []))
                 st.session_state["calendar_fetched"] = True
                 st.session_state["calendar_data"] = all_events
-        else:
-            all_events = st.session_state.get("calendar_data", [])
+            else:
+                all_events = st.session_state.get("calendar_data", [])
 
         # --- Render events ---
         if st.session_state["calendar_fetched"]:
