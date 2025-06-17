@@ -39,7 +39,7 @@ def retrieve_morning_briefing(user_events: str, latitude: float, longitude: floa
     )
 
     # Step 3: Invoke the agent with a run
-    with st.spinner("모닝 브리핑 생성중...", show_time=True):
+    with st.spinner("브리핑 생성중...", show_time=True):
         run = client.runs.create_and_process(thread_id=thread.id, agent_id=agent_id)
 
     if run.status == "completed":

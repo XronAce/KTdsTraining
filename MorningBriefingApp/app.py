@@ -59,37 +59,61 @@ else:
             status.update(label="위치 정보 습득 실패", state="complete")
 
     if lat and lon:
-        if "calendar_fetched" not in st.session_state:
-            with st.spinner("캘린더 정보 가져오는중...", show_time=True):
-                google_events = google_calendar.get_calendar_events()
-                ktds_events = ktds_calendar.get_calendar_events()
-            status.update(label="캘린더 정보 가져오기 완료!", state="complete")
+        all_events = []
 
-            all_events = sorted(google_events + ktds_events)
-            st.session_state["calendar_fetched"] = True
-            st.session_state["calendar_data"] = all_events
+        use_ktds = st.checkbox("KTds 캘린더 연동하기", value=False)
+
+        if "calendar_fetched" not in st.session_state or st.session_state.get("ktds_enabled") != use_ktds:
+            st.session_state["calendar_fetched"] = False
+            st.session_state["ktds_enabled"] = use_ktds
+            st.session_state["calendar_data"] = []
+
+        if not st.session_state["calendar_fetched"]:
+            if use_ktds:
+                with st.form("ktds_login_form"):
+                    ktds_username = st.text_input("KTds 이메일 주소 (예: hong_gil.dong@kt.com)")
+                    ktds_password = st.text_input("비밀번호", type="password")
+                    submitted = st.form_submit_button("캘린더 불러오기")
+
+                if submitted:
+                    with st.spinner("캘린더 정보 가져오는중...", show_time=True):
+                        google_events = google_calendar.get_calendar_events()
+                        ktds_events = ktds_calendar.get_calendar_events(ktds_username, ktds_password)
+
+                    all_events = sorted(google_events + ktds_events)
+                    st.session_state["calendar_fetched"] = True
+                    st.session_state["calendar_data"] = all_events
+                else:
+                    st.info("KTds 메일 계정 로그인을 완료해 주세요.")
+            else:
+                with st.spinner("구글 캘린더 정보 가져오는중...", show_time=True):
+                    google_events = google_calendar.get_calendar_events()
+                all_events = sorted(google_events)
+                st.session_state["calendar_fetched"] = True
+                st.session_state["calendar_data"] = all_events
         else:
             all_events = st.session_state.get("calendar_data", [])
 
-        # Render the calendar section
-        if all_events:
-            indexed_events = [f"{idx}. {e}" for idx, e in enumerate(all_events, start=1)]
-            all_events_md = "📅 **일정**\n\n" + "\n\n".join(indexed_events)
-            st.info(all_events_md)
-            formatted_events = "\n".join(all_events)
-        else:
-            st.info("오늘은 예정되어 있는 일정이 없습니다.")
-            formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
+        # --- Render events ---
+        if st.session_state["calendar_fetched"]:
+            if all_events:
+                indexed_events = [f"{idx}. {e}" for idx, e in enumerate(all_events, start=1)]
+                all_events_md = "📅 **일정**\n\n" + "\n\n".join(indexed_events)
+                st.info(all_events_md)
+                formatted_events = "\n".join(all_events)
+            else:
+                st.info("오늘은 예정되어 있는 일정이 없습니다.")
+                formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
 
-        # Create briefing
-        if st.button("모닝 브리핑 생성", type="secondary"):
-            output_container = st.container()
-            with output_container:
-                with st.status("모닝 브리핑 생성중...", expanded=True) as status:
-                    briefing = azure_agent.retrieve_morning_briefing(formatted_events, lat, lon)
-                    if briefing:
-                        status.update(label="브리핑 생성 완료!", state="complete")
-                        st.markdown(briefing)
-                    else:
-                        status.update(label="브리핑 생성 실패...", state="error")
-                        st.error(f"브리핑 생성에 실패 하였습니다.")
+            if st.session_state["calendar_fetched"]:
+                if st.button("모닝 브리핑 생성", type="secondary"):
+                    output_container = st.container()
+                    with output_container:
+                        with st.status("모닝 브리핑 생성중...", expanded=True) as status:
+                            briefing = azure_agent.retrieve_morning_briefing(formatted_events, lat, lon)
+                            if briefing:
+                                status.update(label="브리핑 생성 완료!", state="complete")
+                                st.markdown(briefing)
+                            else:
+                                status.update(label="브리핑 생성 실패...", state="error")
+                                st.error(f"브리핑 생성에 실패 하였습니다.")

@@ -1,5 +1,4 @@
 import logging
-import os
 import zoneinfo
 from datetime import datetime, timedelta
 from urllib.parse import unquote
@@ -13,10 +12,10 @@ import utils.formatter as formatter
 logging.basicConfig(level=logging.WARN, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def get_calendar_events() -> list | None:
-    username = os.getenv("KTDS_USERNAME")
+def get_calendar_events(username: str, password: str) -> list | None:
+    username = username
     url = f"https://groupmail.kt.co.kr:1985/dav/users/{username}/"
-    password = os.getenv("KTDS_PASSWORD")
+    password = password
 
     # Connect to server
     client = DAVClient(url, username=username, password=password)
