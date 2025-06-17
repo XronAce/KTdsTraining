@@ -11,7 +11,7 @@ import auth.google_auth as google_auth
 import services.azure_agent as azure_agent
 import services.google_calendar as google_calendar
 import services.kakao_api as kakao_api
-import utils.formatter as formatter
+import services.ktds_calendar as ktds_calendar
 import components
 
 
@@ -59,8 +59,24 @@ else:
             status.update(label="위치 정보 습득 실패", state="complete")
 
     if lat and lon:
-        events = google_calendar.get_calendar_events()
-        formatted_events = formatter.format_events(events) or "오늘은 예정 되어 있는 일정이 없습니다."
+        with st.status("캘린더 정보 가져오는중...", expanded=True) as status:
+            with st.spinner("구글 캘린더 정보 가져오는중...", show_time=True):
+                google_events = google_calendar.get_calendar_events()
+            with st.spinner("KTds 캘린더 정보 가져오는중...", show_time=True):
+                ktds_events = ktds_calendar.get_calendar_events()
+            status.update(label="캘린더 정보 가져오기 완료!", state="complete")
+            all_events = sorted(google_events + ktds_events)
+            if all_events:
+                indexed_events = []
+                for idx, e in enumerate(all_events, start=1):
+                    indexed_events.append(f"{idx}. {e}")
+
+                all_events_md = "📅 **일정**\n\n" + "\n\n".join(indexed_events)
+                st.info(all_events_md)
+                formatted_events = "\n".join(all_events)
+            else:
+                st.info("오늘은 예정되어 있는 일정이 없습니다.")
+                formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
 
         if st.button("모닝 브리핑 생성", type="secondary"):
             output_container = st.container()

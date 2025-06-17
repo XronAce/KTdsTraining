@@ -1,4 +1,5 @@
 import os
+import zoneinfo
 from datetime import datetime, timedelta
 
 import streamlit as st
@@ -21,7 +22,7 @@ SCOPES = [
 ]
 
 
-def get_calendar_events(max_results: int = 10) -> list[dict] | None:
+def get_calendar_events(max_results: int = 10) -> list | None:
     try:
         token = st.session_state.get("google_token")
         if not token:
@@ -39,11 +40,11 @@ def get_calendar_events(max_results: int = 10) -> list[dict] | None:
 
         service = build("calendar", "v3", credentials=creds)
 
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.now(tz=zoneinfo.ZoneInfo("Asia/Seoul")).replace(hour=0, minute=0, second=0, microsecond=0)
         tomorrow = today + timedelta(days=1)
 
-        time_min = today.isoformat() + "Z"
-        time_max = tomorrow.isoformat() + "Z"
+        time_min = today.astimezone(zoneinfo.ZoneInfo("UTC")).isoformat().replace("+00:00", "Z")
+        time_max = tomorrow.astimezone(zoneinfo.ZoneInfo("UTC")).isoformat().replace("+00:00", "Z")
 
         events_result = service.events().list(
             calendarId="primary",
@@ -70,13 +71,10 @@ def get_calendar_events(max_results: int = 10) -> list[dict] | None:
             if start_formatted == "종일" or end_formatted == "종일":
                 time_range = "종일"
             else:
-                time_range = f"{start_formatted} ~ {end_formatted}"
+                time_range = f"{start_formatted} - {end_formatted}"
 
-            event_lines.append(f"{idx}. {time_range}: {summary}")
-
-        all_events_md = "📅 **일정**\n\n" + "\n\n".join(event_lines)
-        st.info(all_events_md)
-        return retrieved_events
+            event_lines.append(f"{time_range}: [Google] {summary}")
+        return event_lines
     except HttpError as error:
         st.error(f"Calendar API error: {error}")
         return None
