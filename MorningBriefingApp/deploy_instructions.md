@@ -15,7 +15,7 @@
     - app.py
     - streamlit.sh
 11. Azure Web Apps에서 시작 명령(Startup Command)으로 `bash /home/site/wwwroot/streamlit.sh` 기입하여 streamlit.sh가 구동되도록 지정
-12. (프로덕션) DefaultAzureCredential -> ManagedIdentityCredential 변경
+12. (프로덕션) DefaultAzureCredential -> ManagedIdentityCredential 변경 (x, 13번 수행 시 DefaultAzureCredential 적용 가능)
 13. Azure Web App 접속하여 Settings > Identity > System Assigned 탭 > Status off에서 on 변경
 14. Azure AI Foundry 리소스에 진입 후 access control(IAM) 진입 후 '+ Add' > Add role assignment > Azure AI User 추가. (이걸로 부족하면 congnitive services user 추가)
 15. 사이트 진입 후 접속 및 기능 테스트 수행
