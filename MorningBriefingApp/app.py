@@ -59,25 +59,29 @@ else:
             status.update(label="위치 정보 습득 실패", state="complete")
 
     if lat and lon:
-        with st.status("캘린더 정보 가져오는중...", expanded=True) as status:
-            with st.spinner("구글 캘린더 정보 가져오는중...", show_time=True):
+        if "calendar_fetched" not in st.session_state:
+            with st.spinner("캘린더 정보 가져오는중...", show_time=True):
                 google_events = google_calendar.get_calendar_events()
-            with st.spinner("KTds 캘린더 정보 가져오는중...", show_time=True):
                 ktds_events = ktds_calendar.get_calendar_events()
             status.update(label="캘린더 정보 가져오기 완료!", state="complete")
+
             all_events = sorted(google_events + ktds_events)
-            if all_events:
-                indexed_events = []
-                for idx, e in enumerate(all_events, start=1):
-                    indexed_events.append(f"{idx}. {e}")
+            st.session_state["calendar_fetched"] = True
+            st.session_state["calendar_data"] = all_events
+        else:
+            all_events = st.session_state.get("calendar_data", [])
 
-                all_events_md = "📅 **일정**\n\n" + "\n\n".join(indexed_events)
-                st.info(all_events_md)
-                formatted_events = "\n".join(all_events)
-            else:
-                st.info("오늘은 예정되어 있는 일정이 없습니다.")
-                formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
+        # Render the calendar section
+        if all_events:
+            indexed_events = [f"{idx}. {e}" for idx, e in enumerate(all_events, start=1)]
+            all_events_md = "📅 **일정**\n\n" + "\n\n".join(indexed_events)
+            st.info(all_events_md)
+            formatted_events = "\n".join(all_events)
+        else:
+            st.info("오늘은 예정되어 있는 일정이 없습니다.")
+            formatted_events = "오늘은 예정되어 있는 일정이 없습니다."
 
+        # Create briefing
         if st.button("모닝 브리핑 생성", type="secondary"):
             output_container = st.container()
             with output_container:
