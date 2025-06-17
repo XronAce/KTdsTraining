@@ -83,8 +83,7 @@ else:
                         except Exception as e:
                             st.error(f"Error occurred while fetching KTds calendar events: {e}")
                             st.stop()
-
-                    all_events = sorted(google_events + ktds_events)
+                    all_events = sorted((google_events or []) + (ktds_events or []))
                     st.session_state["calendar_fetched"] = True
                     st.session_state["calendar_data"] = all_events
                 else:
@@ -92,7 +91,7 @@ else:
             else:
                 with st.spinner("구글 캘린더 정보 가져오는중...", show_time=True):
                     google_events = google_calendar.get_calendar_events()
-                all_events = sorted(google_events)
+                all_events = sorted((google_events or []))
                 st.session_state["calendar_fetched"] = True
                 st.session_state["calendar_data"] = all_events
         else:

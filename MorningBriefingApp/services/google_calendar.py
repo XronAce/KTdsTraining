@@ -57,7 +57,6 @@ def get_calendar_events(max_results: int = 10) -> list | None:
 
         retrieved_events = events_result.get("items", [])
         if not retrieved_events:
-            st.info("오늘은 예정되어 있는 일정이 없습니다.")
             return None
 
         event_lines = []
