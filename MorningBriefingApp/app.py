@@ -76,9 +76,13 @@ else:
                     submitted = st.form_submit_button("캘린더 불러오기")
 
                 if submitted:
-                    with st.spinner("캘린더 정보 가져오는중...", show_time=True):
+                    with st.spinner("캘린더 정보 가져오는중...", show_time=False):
                         google_events = google_calendar.get_calendar_events()
-                        ktds_events = ktds_calendar.get_calendar_events(ktds_username, ktds_password)
+                        try:
+                            ktds_events = ktds_calendar.get_calendar_events(ktds_username, ktds_password)
+                        except Exception as e:
+                            st.error(f"Error occurred while fetching KTds calendar events: {e}")
+                            st.stop()
 
                     all_events = sorted(google_events + ktds_events)
                     st.session_state["calendar_fetched"] = True
