@@ -20,13 +20,15 @@ If there is upcoming events, expected answer looks like this in markdown:
 - 날씨: 한때 소나기
 
 #### 총평
+오늘은 오전 9시에 KTds 출근 일정이 시작됩니다. 늦지 않도록 준비하셔야 겠어요.
+
 오늘의 날씨는 한때 소나기가 예상되며, 최고 기온은 30도 입니다.
 
 비가 올 수 있으니 우산을 꼭 지참하시고, 더위에 조심하세요!
 
 오늘도 좋은 하루 되세요~!
 ```
-
+Please illustrate the schedule provided for today in general at '총평'.
 If there is no upcoming events, expected answer looks like this in markdown:
 ```
 ### 2025-01-01(수) 모닝 브리핑
