@@ -1,6 +1,7 @@
 import logging
 import os
 
+import requests
 import streamlit as st
 from authlib.integrations.requests_client import OAuth2Session
 
@@ -49,3 +50,18 @@ def exchange_token():
     except Exception as e:
         logging.error(f"Token exchange failed: {e}")
         st.error(f"Token exchange failed: {e}")
+
+
+def fetch_google_userinfo():
+    token = st.session_state.get("google_token")
+    if not token:
+        st.warning("No token found.")
+        return None
+    access_token = token["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+    resp = requests.get("https://openidconnect.googleapis.com/v1/userinfo", headers=headers)
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        st.error("Failed to fetch user info.")
+        return None
