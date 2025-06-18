@@ -86,9 +86,9 @@ else:
                         st.stop()
                 full_events = (google_events or []) + (ktds_events or [])
                 all_events = sorted(full_events, key=lambda e: formatter.extract_start_time(formatter.normalize_korean_ampm(e)))
-                print(all_events)
                 st.session_state["calendar_fetched"] = True
                 st.session_state["calendar_data"] = all_events
+                st.sidebar.button("연동 해제", type="primary", on_click=lambda: ktds_calendar.disconnect_ktds_calendar("KTds"))
             else:
                 if not st.session_state["calendar_fetched"]:
                     with st.sidebar.form("ktds_login_form"):

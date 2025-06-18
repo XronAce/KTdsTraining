@@ -97,3 +97,14 @@ def integrate_ktds_calendar(email: str, password: str):
         print(f"Error occurred while integrating KTds calendar: {e}")
         st.rerun()
 
+
+def disconnect_ktds_calendar(provider:str):
+    with SessionLocal() as db:
+        existing_user = db.query(User).filter_by(email=st.session_state["google_profile"]['email']).first()
+        if existing_user:
+            existing_ktds_cal_integrations = db.query(CalendarIntegration).filter_by(user_id=existing_user.user_id, provider=provider).first()
+            if existing_ktds_cal_integrations:
+                db.delete(existing_ktds_cal_integrations)
+                db.commit()
+            st.session_state["calendar_integrations"].pop(provider)
+            st.session_state["ktds_enabled"] = False
