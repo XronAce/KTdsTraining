@@ -5,6 +5,8 @@ import requests
 import streamlit as st
 from authlib.integrations.requests_client import OAuth2Session
 
+from services.user_service import upsert_user_from_google_profile
+
 # --- OAuth2 Configuration ---
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -46,13 +48,14 @@ def exchange_token():
         )
         logging.info("Token successfully fetched")
         st.session_state["google_token"] = token
+        upsert_user_from_google_profile()
         st.rerun()
     except Exception as e:
         logging.error(f"Token exchange failed: {e}")
         st.error(f"Token exchange failed: {e}")
 
 
-def fetch_google_userinfo():
+def fetch_google_userinfo() -> dict | None:
     token = st.session_state.get("google_token")
     if not token:
         st.warning("No token found.")
