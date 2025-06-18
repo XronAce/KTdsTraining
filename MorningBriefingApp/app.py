@@ -12,6 +12,7 @@ import services.azure_agent as azure_agent
 import services.google_calendar as google_calendar
 import services.kakao_api as kakao_api
 import services.ktds_calendar as ktds_calendar
+import utils.formatter as formatter
 import components
 
 
@@ -89,7 +90,8 @@ else:
                         except Exception:
                             st.error("사내 메일 주소 또는 비밀번호가 잘못되었습니다. 다시 시도해 주세요.")
                             st.stop()
-                    all_events = sorted((google_events or []) + (ktds_events or []))
+                    full_events = (google_events or []) + (ktds_events or [])
+                    all_events = sorted(full_events, key=lambda e: formatter.extract_start_time(formatter.normalize_korean_ampm(e)))
                     st.session_state["calendar_fetched"] = True
                     st.session_state["calendar_data"] = all_events
                     st.rerun()
@@ -106,7 +108,7 @@ else:
             if not st.session_state["calendar_fetched"]:
                 with st.spinner("구글 캘린더 정보 가져오는중...", show_time=True):
                     google_events = google_calendar.get_calendar_events()
-                all_events = sorted((google_events or []))
+                all_events = sorted((google_events or []), key=lambda e: formatter.extract_start_time(formatter.normalize_korean_ampm(e)))
                 st.session_state["calendar_fetched"] = True
                 st.session_state["calendar_data"] = all_events
             else:

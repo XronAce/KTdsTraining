@@ -28,7 +28,7 @@ def get_calendar_events(username: str, password: str) -> list | None:
     personal_ktds_calendar = None
     for i, cal in enumerate(calendars):
         if unquote(str(cal.url)) == f"https://groupmail.kt.co.kr:1985/dav/{username}/calendar/":
-            print(f"found calendar via url: {cal.url}")
+            print(f"found calendar via url: {unquote(str(cal.url))}")
             personal_ktds_calendar = cal
 
     calendar = personal_ktds_calendar if personal_ktds_calendar else calendars[0]
