@@ -80,7 +80,7 @@ else:
                     google_events = google_calendar.get_calendar_events()
                 with st.spinner("KTds 캘린더 정보 가져오는중...", show_time=False):
                     try:
-                        ktds_events = ktds_calendar.get_calendar_events(st.session_state["calendar_integrations"]['KTds']['username'], st.session_state["calendar_integrations"]['KTds']['password'])
+                        ktds_events = ktds_calendar.get_calendar_events(st.session_state["calendar_integrations"]['KTds']['username'], ktds_calendar.decrypt_password(st.session_state["calendar_integrations"]['KTds']['password']))
                     except Exception:
                         st.error("사내 메일 주소 또는 비밀번호가 잘못되었습니다. 다시 시도해 주세요.")
                         st.stop()

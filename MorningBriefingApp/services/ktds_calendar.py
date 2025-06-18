@@ -2,6 +2,8 @@ import logging
 import zoneinfo
 from datetime import datetime, timedelta
 from urllib.parse import unquote
+from cryptography.fernet import Fernet
+import os
 
 import streamlit as st
 from caldav import DAVClient
@@ -13,6 +15,15 @@ from models import User, CalendarIntegration
 
 # Enable debug logging
 logging.basicConfig(level=logging.WARN, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Enable encryption
+fernet = Fernet(os.getenv("ENCRYPTION_KEY").encode("utf-8"))
+
+def encrypt_password(plain_password: str) -> str:
+    return fernet.encrypt(plain_password.encode("utf-8")).decode("utf-8")
+
+def decrypt_password(encrypted_password: str) -> str:
+    return fernet.decrypt(encrypted_password.encode("utf-8")).decode("utf-8")
 
 
 def get_calendar_events(username: str, password: str) -> list | None:
@@ -78,19 +89,19 @@ def integrate_ktds_calendar(email: str, password: str):
                 existing_ktds_cal_integrations = db.query(CalendarIntegration).filter_by(user_id=existing_user.user_id, provider="KTds").first()
                 if existing_ktds_cal_integrations:
                     existing_ktds_cal_integrations.username = email
-                    existing_ktds_cal_integrations.password = password
+                    existing_ktds_cal_integrations.password = encrypt_password(password)
                 else:
                     new_integration = CalendarIntegration(
                         user_id=existing_user.user_id,
                         provider="KTds",
                         username=email,
-                        password=password
+                        password=encrypt_password(password)
                     )
                     db.add(new_integration)
                 db.commit()
             st.session_state["calendar_integrations"]['KTds'] = {
                 "username": email,
-                "password": password
+                "password": encrypt_password(password)
             }
     except Exception as e:
         st.error("KTds 캘린더 연동 실패.")
