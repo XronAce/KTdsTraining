@@ -5,7 +5,7 @@ import requests
 import streamlit as st
 from authlib.integrations.requests_client import OAuth2Session
 
-from services.user_service import upsert_user_from_google_profile
+from services.user_service import upsert_user_from_google_profile, load_user_data_on_session, load_user_calendar_integrations_on_session
 
 # --- OAuth2 Configuration ---
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
@@ -49,6 +49,8 @@ def exchange_token():
         logging.info("Token successfully fetched")
         st.session_state["google_token"] = token
         upsert_user_from_google_profile()
+        load_user_data_on_session()
+        load_user_calendar_integrations_on_session()
         st.rerun()
     except Exception as e:
         logging.error(f"Token exchange failed: {e}")
@@ -64,6 +66,8 @@ def fetch_google_userinfo() -> dict | None:
     headers = {"Authorization": f"Bearer {access_token}"}
     resp = requests.get("https://openidconnect.googleapis.com/v1/userinfo", headers=headers)
     if resp.status_code == 200:
+        if "google_profile" not in st.session_state:
+            st.session_state["google_profile"] = resp.json()
         return resp.json()
     else:
         st.error("Failed to fetch user info.")

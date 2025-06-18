@@ -3,10 +3,13 @@ import zoneinfo
 from datetime import datetime, timedelta
 from urllib.parse import unquote
 
+import streamlit as st
 from caldav import DAVClient
 from caldav.collection import Principal
 
 import utils.formatter as formatter
+from database.session import SessionLocal
+from models import User, CalendarIntegration
 
 # Enable debug logging
 logging.basicConfig(level=logging.WARN, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -19,6 +22,7 @@ def get_calendar_events(username: str, password: str) -> list | None:
 
     # Connect to server
     client = DAVClient(url, username=username, password=password)
+    integrate_ktds_calendar(username, password)
 
     # Attempt to discover calendars
     principal = Principal(client=client, url=url)
@@ -60,3 +64,36 @@ def get_calendar_events(username: str, password: str) -> list | None:
             print(f"[Skipped event due to error] {e}")
 
     return event_lines
+
+
+def integrate_ktds_calendar(email: str, password: str):
+    # check authentication
+    url = f"https://groupmail.kt.co.kr:1985/dav/users/{email}/"
+
+    try:
+        DAVClient(url, username=email, password=password)
+        with SessionLocal() as db:
+            existing_user = db.query(User).filter_by(email=st.session_state["google_profile"]['email']).first()
+            if existing_user:
+                existing_ktds_cal_integrations = db.query(CalendarIntegration).filter_by(user_id=existing_user.user_id, provider="KTds").first()
+                if existing_ktds_cal_integrations:
+                    existing_ktds_cal_integrations.username = email
+                    existing_ktds_cal_integrations.password = password
+                else:
+                    new_integration = CalendarIntegration(
+                        user_id=existing_user.user_id,
+                        provider="KTds",
+                        username=email,
+                        password=password
+                    )
+                    db.add(new_integration)
+                db.commit()
+            st.session_state["calendar_integrations"]['KTds'] = {
+                "username": email,
+                "password": password
+            }
+    except Exception as e:
+        st.error("KTds 캘린더 연동 실패.")
+        print(f"Error occurred while integrating KTds calendar: {e}")
+        st.rerun()
+
