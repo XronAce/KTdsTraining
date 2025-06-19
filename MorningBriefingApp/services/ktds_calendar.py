@@ -70,7 +70,7 @@ def get_calendar_events(username: str, password: str) -> list | None:
             else:
                 time_range = f"{start} - {end}"
 
-            event_lines.append(f"{time_range}: [KTds] {summary}")
+            event_lines.append(f"{time_range}: {summary}")
         except Exception as e:
             print(f"[Skipped event due to error] {e}")
 

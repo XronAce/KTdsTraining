@@ -75,7 +75,7 @@ def get_calendar_events(max_results: int = 10) -> list | None:
             else:
                 time_range = f"{start_formatted} - {end_formatted}"
 
-            event_lines.append(f"{time_range}: [Google] {summary}")
+            event_lines.append(f"{time_range}: {summary}")
         return event_lines
     except HttpError as error:
         st.error(f"구글 캘린더에 접근 권한이 부족합니다. 재로그인 시 권한을 부여해 주세요.")
