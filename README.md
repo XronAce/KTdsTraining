@@ -1,6 +1,7 @@
 # 일정 자동 분석 및 날씨 데이터 기반 모닝 브리핑 AI Agent
 
-## 애플리케이션 준비 및 배포 환경 구축 순서
+## 애플리케이션 배포 가이드
+### 애플리케이션 준비 및 배포 환경 구축 순서
 1. [Azure Portal](https://portal.azure.com)에 접속합니다.
 2. 리소스 그룹을 생성합니다. (예: donggi-RG)
 3. [Azure AI Foundry](https://ai.azure.com)에서 Azure AI 파운드리 리소스를 생성합니다.
@@ -28,7 +29,7 @@
     ```
 16. [MorningBriefingApp](./MorningBriefingApp) 폴더 전체를 생성해둔 web app에 배포합니다.
 
-## 프로젝트에 사용된 외부 API 목록
+### 프로젝트에 사용된 외부 API 목록
 | API 이름                                                                                            | 목적                            |
 |---------------------------------------------------------------------------------------------------|-------------------------------|
 | [Kakao Developer](https://developers.kakao.com) REST API                                          | 카카오맵 주소 및 위치 정보(위도, 경도 추출목적)  |
@@ -36,7 +37,7 @@
 | [Open Meteo](https://open-meteo.com)                                                              | 위도, 경도 기반 날씨 데이터 조회           |
 | [KT Groupmail CalDAV 연동 API](https://groupmail.kt.co.kr:1985/dav/<username>/calendar/)            | 사내 캘린더 이벤트 데이터 조회             |
 
-## .env 샘플 예시
+### .env 샘플 예시
 ```sh 
 AZURE_AI_FOUNDRY_ENDPOINT="https://my-azure-ai-foundry-resource.services.ai.azure.com/api/projects/my-project"
 AGENT_ID="asst_abcdefghijklmnopqrstuvwxyz"
@@ -47,3 +48,32 @@ GOOGLE_REDIRECT_URI="https://morning-briefing.azurewebsites.net"
 DATABASE_URL="postgresql+psycopg2://my-account-name:my-account-password@my-azure-db.postgres.database.azure.com:5432/postgres"
 ENCRYPTION_KEY="abcdefghijklmnopqrstuvwxyz1234567890"
 ```
+
+## 애플리케이션 설명
+### 1. 초기 화면
+![초기 화면](./img/1_landing_page.png)
+- AI 모닝 브리핑을 받기 위해서는 구글 로그인이 필요합니다.
+### 2. 구글 OAuth 로그인
+![구글 OAuth 로그인](./img/2_google_oauth_login.png)
+- 구글 OAuth 로그인 화면 입니다.
+### 3. 구글 OAuth 테스트 앱 설명
+![구글 OAuth 테스트 앱 설명](./img/3_google_test_app.png)
+- 구글 정식 인증을 받지 않은 테스트 단계의 앱이기 때문에 나오는 안내 문구입니다.
+- 정식 인증이 완료되지 않았기 때문에, 초대받은 구글 계정으로만 앱 로그인이 가능합니다.
+### 4. 로그인 직후 화면
+![로그인 직후 화면](./img/3_google_test_app.png)
+- 로그인 후 볼 수 있는 메인 화면 입니다.
+### 5. KTds 캘린더 연동 사이드바
+![KTds 캘린더 연동 화면](./img/5_ktds_calendar_integration.png)
+- KTds 사내망 메일 계정에 연동되어 있는 일정 정보를 가져올 수 있습니다.
+- CalDAV를 통해 연동시켰으며, 사내 메일 주소와 비밀번호 입력이 필요합니다.
+- 해당 정보는 Azure PostgreSQL flexible server 내에 암호화하여 저장해 둠으로써 추후 재연결 없이 연동을 유지할 수 있도록 하였습니다.
+### 6. KTds 캘린더 연동 이후 화면 변화
+![KTds 캘린더 연동 이후](./img/6_after_integration.png)
+- 연동이 완료되면 구글 캘린더 일정과 KTds 캘린더 일정을 결합하여 시간 순으로 정렬하여 표시합니다.
+### 7. 모닝 브리핑 요청
+![모닝 브리핑 요청](./img/7_calling_ai_for_briefing.png)
+- 모닝 브리핑을 AI(gpt-4o-mini)에게 요청하는 화면 입니다.
+### 8. 완성된 모닝 브리핑 결과 출력
+![모닝 브리핑 결과물 출력](./img/8_morning_briefing_output.png)
+- 완성된 모닝 브리핑 결과물을 출력한 화면입니다.
